@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*
+!.env.example
+!.env.demo
+*.log
+coverage/
+.qa/
+.npm-cache/
+releases/
