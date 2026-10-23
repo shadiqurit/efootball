@@ -36,6 +36,10 @@ The frontend and backend are independent projects. Each has its own `package.jso
 | Rebuild the Windows deployment ZIP | `npm run release:windows` / `deploy/windows/Build-Package.ps1` |
 | Login/logout/session endpoints | `backend/src/routes/auth.js` |
 | Password/session helpers | `backend/src/auth.js` |
+| Account settings and user management screen | `frontend/src/views/SettingsView.vue` |
+| User administration endpoints | `backend/src/routes/users.js` |
+| Role checks and squad ownership | `backend/src/permissions.js` |
+| Roles/ownership database upgrade | `backend/scripts/migrate-access.js` |
 | Request field validation | `backend/src/validation.js` |
 | CORS, Origin checks, request limits, security headers | `backend/src/middleware/security.js` |
 | Public API error messages | `backend/src/middleware/error-handler.js` |
@@ -46,7 +50,7 @@ The frontend and backend are independent projects. Each has its own `package.jso
 
 ## Backend organization
 
-`src/index.js` starts the server. `src/app.js` wires middleware and five feature routers. The auth router exposes login, then protects session endpoints; the remaining routers run behind shared authentication. Keep that order when adding routes.
+`src/index.js` starts the server. `src/app.js` wires middleware and feature routers. The auth router exposes login, then protects session endpoints; the remaining routers run behind shared authentication. Keep that order when adding routes. Catalog mutations require an admin role, user management requires a super admin, and squad reads/writes must check ownership for every non-super-admin request, including analytics and history.
 
 Each feature router contains its handlers and parameter-bound SQL together. This keeps related changes in one place without adding controller, service and repository layers to a small application. Input rules stay in `validation.js`; shared error handling and request security stay in `middleware/`.
 

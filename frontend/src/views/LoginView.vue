@@ -70,7 +70,7 @@ const showPassword = ref(false);
           </button>
         </form>
         <p class="login-note">
-          <Icon name="shield" :size="15" />Private workspace. Administrator access.
+          <Icon name="shield" :size="15" />Private workspace. Secure account access.
         </p>
       </div>
       <span class="login-copyright">TOUCHLINE / EFOOTBALL MANAGER</span>

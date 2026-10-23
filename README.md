@@ -40,9 +40,9 @@ For a file-by-file guide to changing features, see [MAINTENANCE.md](MAINTENANCE.
 - Shared playing-style reference table, custom styles, per-squad player styles and detailed squad CSV exports that open in Excel.
 - Per-assignment ratings from **1 to 120**, with previous/new rating history and administrator attribution.
 - Squad balance, highest/average ratings, top players, recent changes and account comparisons.
-- Responsive interface and private administrator login.
+- Responsive interface, private user accounts, profile/password settings and role-based permissions.
 
-This manages your records; it does not connect to or modify the eFootball game itself. Administrators share one workspace.
+This manages your records; it does not connect to or modify the eFootball game itself. Users manage their own squads. Administrators also maintain the shared player database and playing styles; super administrators can manage all squads, users, roles and passwords. See the [user access guide](deploy/windows/USER-ACCESS.md) for the upgrade steps.
 
 ## Local development
 
@@ -110,7 +110,7 @@ npm test
 npm run build
 ```
 
-17 backend tests and 4 frontend tests pass. They cover authentication, CORS/preflights, local hostname aliases, strict production origins, cookie configuration, API-only serving, source conversion, validation, bound queries, transactional history and the separate-domain API client. The production frontend builds successfully.
+33 backend tests and 12 frontend tests pass. They cover authentication, roles, squad ownership, user/password management, session revocation, CORS/preflights, origin checks, API-only serving, source conversion, validation, bound queries, transactional history, exports and the separate-domain API client. The production frontend builds successfully. The roles/ownership upgrade and account lifecycle were also verified against real MySQL in an isolated test database, including concurrent sign-in and password reset. Account settings were checked on desktop and mobile with sample data.
 
 API unit tests use a controlled database double. A local MySQL 8.0.46 smoke check also passed: all 32,622 Excel records matched all 15 database fields with zero mismatches; administrator login, session access, player listing, analytics, assignment, rating change and history worked. Temporary test records were removed. Browser visual verification remains unavailable because local preview access was denied. Repeat these smoke checks after production deployment.
 

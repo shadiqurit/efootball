@@ -10,6 +10,7 @@ import GamesView from './views/GamesView.vue';
 import AnalyticsView from './views/AnalyticsView.vue';
 import HistoryView from './views/HistoryView.vue';
 import LoginView from './views/LoginView.vue';
+import SettingsView from './views/SettingsView.vue';
 const {
   nav,
   page,
@@ -29,6 +30,7 @@ const {
   isDemo,
   query,
   openPlayer,
+  canManageDatabase,
 } = provideWorkspace();
 const headerSearch = ref('');
 const { drawer, menuButton, onKeydown } = useNavigationDrawer(mobileNav);
@@ -100,7 +102,15 @@ function searchPlayers() {
           <span class="avatar">{{ initials(user.NAME) }}</span>
           <div>
             <strong>{{ user.NAME }}</strong
-            ><small>{{ isDemo ? 'Demo manager' : 'Club administrator' }}</small>
+            ><small>{{
+              isDemo
+                ? 'Demo manager'
+                : user.ROLE === 'super_admin'
+                  ? 'Super administrator'
+                  : user.ROLE === 'admin'
+                    ? 'Administrator'
+                    : 'Squad manager'
+            }}</small>
           </div>
           <button
             v-if="!isDemo"
@@ -146,13 +156,21 @@ function searchPlayers() {
           >
             <Icon name="search" /></button
           ><button
+            v-if="canManageDatabase"
             class="icon-button quick-add"
             aria-label="Add a new player"
             title="Add player"
             @click="openPlayer()"
           >
             <Icon name="plus" /></button
-          ><span class="avatar small">{{ initials(user.NAME) }}</span>
+          ><button
+            class="avatar small"
+            aria-label="Account settings"
+            title="Account settings"
+            @click="navigate('settings')"
+          >
+            {{ initials(user.NAME) }}
+          </button>
         </div>
         <div
           v-if="loading"
@@ -178,6 +196,7 @@ function searchPlayers() {
         /><GamesView v-if="page === 'games'" /><AnalyticsView
           v-if="page === 'analytics'"
         /><HistoryView v-if="page === 'history'" />
+        <SettingsView v-if="page === 'settings'" />
         <footer class="main-footer">
           <span
             ><Icon name="football" :size="16" /><strong>touchline.</strong

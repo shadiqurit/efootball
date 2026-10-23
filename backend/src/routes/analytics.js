@@ -1,14 +1,19 @@
 import { Router } from 'express';
 import { id } from '../validation.js';
+import { accountScope, assertAccountAccess } from '../permissions.js';
 
 export function createAnalyticsRoutes(db) {
   const router = Router();
   router.get('/analytics', async (req, res) => {
     const accountId = req.query.accountId ? id.parse(req.query.accountId) : null;
-    const where = accountId ? 'WHERE a.GAME_ACCOUNT_ID=?' : '',
-      args = accountId ? [accountId] : [];
+    if (accountId) await assertAccountAccess(db, req.user, accountId);
+    const scope = accountScope(req.user);
+    const ownership = `a.GAME_ACCOUNT_ID IN (SELECT g.ID FROM GAME_ACCOUNTS g WHERE ${scope.clause})`;
+    const where = `WHERE ${ownership}${accountId ? ' AND a.GAME_ACCOUNT_ID=?' : ''}`,
+      args = [...scope.args, ...(accountId ? [accountId] : [])];
     const [totals] = await db.execute(
-      'SELECT (SELECT COUNT(*) FROM PLAYERS) PLAYERS,(SELECT COUNT(*) FROM GAME_ACCOUNTS) ACCOUNTS,(SELECT COUNT(DISTINCT COUNTRY) FROM PLAYERS) COUNTRIES',
+      `SELECT (SELECT COUNT(*) FROM PLAYERS) PLAYERS,(SELECT COUNT(*) FROM GAME_ACCOUNTS g WHERE ${scope.clause}) ACCOUNTS,(SELECT COUNT(DISTINCT COUNTRY) FROM PLAYERS) COUNTRIES`,
+      scope.args,
     );
     const [stats] = await db.execute(
       `SELECT COUNT(*) ASSIGNMENTS,ROUND(AVG(a.RATING),1) AVG_RATING,MAX(a.RATING) BEST_RATING FROM ASSIGNMENTS a ${where}`,

@@ -2,6 +2,8 @@
 
 Target: `https://efootball.shadiqur.bd`, source at `D:\app\efootball`, static root at `D:\app\efootball\frontend\dist`, API at `127.0.0.1:3005`. Use this guide instead of the IIS/WinSW guide for this deployment. Only the API needs PM2; Nginx serves the compiled frontend.
 
+For the roles/password/squad ownership upgrade, follow [the user access guide](USER-ACCESS.md). Run database migrations before starting the updated API.
+
 ## 1. Copy the source and build
 
 Copy this repository, including `ecosystem.config.cjs`, into `D:\app\efootball`. Do not copy local `node_modules`, development `.env` files, or `.git`. Use Node.js 22.12+ (a supported LTS release) and a configured MySQL database. Run each command in PowerShell and stop if one fails:

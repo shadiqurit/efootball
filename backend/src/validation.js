@@ -66,6 +66,35 @@ export const assignmentStyleSchema = z.object({ PLAYING_STYLE_ID: id.nullable() 
 export const loginSchema = z
   .object({ email: z.email().max(254), password: z.string().min(1).max(256) })
   .strict();
+export const newPassword = z.string().min(12).max(256);
+export const userSchema = z
+  .object({
+    NAME: z.string().trim().min(1).max(100),
+    EMAIL: z
+      .email()
+      .max(254)
+      .transform((v) => v.toLowerCase()),
+    ROLE: z.enum(['user', 'admin', 'super_admin']),
+    IS_ACTIVE: z.boolean(),
+  })
+  .strict();
+export const createUserSchema = userSchema.extend({ PASSWORD: newPassword });
+export const profileSchema = z
+  .object({
+    NAME: z.string().trim().min(1).max(100),
+    EMAIL: z
+      .email()
+      .max(254)
+      .transform((v) => v.toLowerCase()),
+    currentPassword: z.string().min(1).max(256),
+  })
+  .strict();
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(256),
+    newPassword,
+  })
+  .strict();
 export const listSchema = z.object({
   q: z.string().trim().max(100).default(''),
   position: z.string().max(20).default(''),

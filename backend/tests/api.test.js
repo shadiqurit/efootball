@@ -18,10 +18,19 @@ const database = {
   async execute(sql, args) {
     calls.push({ sql, args });
     if (sql.startsWith('SELECT u.ID'))
-      return [[{ ID: 1, NAME: 'Manager', EMAIL: 'manager@example.test' }]];
+      return [[{ ID: 1, NAME: 'Manager', EMAIL: 'manager@example.test', ROLE: 'super_admin' }]];
     if (sql.startsWith('SELECT * FROM USERS'))
       return [
-        [{ ID: 1, NAME: 'Manager', EMAIL: 'manager@example.test', PASSWORD_HASH: passwordHash }],
+        [
+          {
+            ID: 1,
+            NAME: 'Manager',
+            EMAIL: 'manager@example.test',
+            PASSWORD_HASH: passwordHash,
+            ROLE: 'super_admin',
+            IS_ACTIVE: 1,
+          },
+        ],
       ];
     return impl(sql, args);
   },

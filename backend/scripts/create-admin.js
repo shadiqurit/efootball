@@ -10,12 +10,11 @@ try {
     .min(1)
     .max(100)
     .parse(process.env.ADMIN_NAME || 'Manager');
-  await db.execute('INSERT INTO USERS (EMAIL,NAME,PASSWORD_HASH) VALUES (?,?,?)', [
-    email,
-    name,
-    await hashPassword(password),
-  ]);
-  console.log('Administrator created. Remove ADMIN_PASSWORD from .env.');
+  await db.execute(
+    "INSERT INTO USERS (EMAIL,NAME,PASSWORD_HASH,ROLE) VALUES (?,?,?,'super_admin')",
+    [email, name, await hashPassword(password)],
+  );
+  console.log('Super administrator created. Remove ADMIN_PASSWORD from .env.');
 } finally {
   await db.end();
 }

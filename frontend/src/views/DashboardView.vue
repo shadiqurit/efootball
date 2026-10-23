@@ -11,6 +11,8 @@ const {
   openAccount,
   accountId,
   navigate,
+  canManageDatabase,
+  openAssign,
 } = useWorkspace();
 </script>
 
@@ -21,7 +23,7 @@ const {
       <h1>Welcome to the touchline<span class="accent-text">.</span></h1>
       <p>Your collection. Your squads. A clear view of the whole game.</p>
     </div>
-    <button class="button primary" @click="openPlayer()">
+    <button v-if="canManageDatabase" class="button primary" @click="openPlayer()">
       <Icon name="plus" :size="18" />Add player
     </button>
   </div>
@@ -173,7 +175,11 @@ const {
       </button>
     </div>
     <div class="preview-players">
-      <button v-for="p in players.slice(0, 5)" :key="p.PLAYER_ID" @click="openPlayer(p)">
+      <button
+        v-for="p in players.slice(0, 5)"
+        :key="p.PLAYER_ID"
+        @click="canManageDatabase ? openPlayer(p) : openAssign(p)"
+      >
         <span class="player-avatar large" :class="roleClass(p.POSITION)">{{
           initials(p.NAME)
         }}</span

@@ -21,6 +21,7 @@ const {
   currentPage,
   pageSize,
   maxPage,
+  canManageDatabase,
 } = useWorkspace();
 </script>
 
@@ -34,7 +35,7 @@ const {
     <div class="actions">
       <button class="button secondary" :disabled="exportBusy" @click="exportPlayers">
         <Icon name="export" :size="17" />{{ exportBusy ? 'Exporting…' : 'Export CSV' }}</button
-      ><button class="button primary" @click="openPlayer()">
+      ><button v-if="canManageDatabase" class="button primary" @click="openPlayer()">
         <Icon name="plus" :size="18" />Add player
       </button>
     </div>
@@ -99,7 +100,9 @@ const {
                   initials(p.NAME)
                 }}</span>
                 <div>
-                  <button class="player-name" @click="openPlayer(p)">{{ p.NAME }}</button
+                  <button v-if="canManageDatabase" class="player-name" @click="openPlayer(p)">
+                    {{ p.NAME }}</button
+                  ><strong v-else class="player-name">{{ p.NAME }}</strong
                   ><small
                     >#{{ String(p.PLAYER_ID).padStart(4, '0') }} <span>·</span>
                     {{ p.PLAYER_CODE }}</small
@@ -130,9 +133,15 @@ const {
                   :aria-label="`Assign ${p.NAME}`"
                 >
                   <Icon name="plus" :size="14" />Assign</button
-                ><button class="icon-button" @click="openPlayer(p)" :aria-label="`Edit ${p.NAME}`">
+                ><button
+                  v-if="canManageDatabase"
+                  class="icon-button"
+                  @click="openPlayer(p)"
+                  :aria-label="`Edit ${p.NAME}`"
+                >
                   <Icon name="edit" :size="16" /></button
                 ><button
+                  v-if="canManageDatabase"
                   class="icon-button danger-hover"
                   @click="confirmDelete('players', p)"
                   :aria-label="`Delete ${p.NAME}`"
@@ -162,6 +171,7 @@ const {
         }}
       </p>
       <button
+        v-if="canManageDatabase || query || position || country"
         class="button secondary"
         @click="
           query || position || country

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { id, playerSchema, listSchema } from '../validation.js';
+import { accountScope, requireDatabaseAdmin } from '../permissions.js';
 
 export function createPlayersRoutes(db) {
   const router = Router();
@@ -27,9 +28,10 @@ export function createPlayersRoutes(db) {
       country: 'p.COUNTRY,p.NAME',
     }[input.sort];
     const [counts] = await db.execute(`SELECT COUNT(*) total FROM PLAYERS p ${where}`, args);
+    const scope = accountScope(req.user);
     const [rows] = await db.execute(
-      `SELECT p.*, (SELECT COUNT(*) FROM ASSIGNMENTS a WHERE a.PLAYER_ID=p.PLAYER_ID) ACCOUNT_COUNT FROM PLAYERS p ${where} ORDER BY ${order} LIMIT ${input.limit} OFFSET ${(input.page - 1) * input.limit}`,
-      args,
+      `SELECT p.*, (SELECT COUNT(*) FROM ASSIGNMENTS a JOIN GAME_ACCOUNTS g ON g.ID=a.GAME_ACCOUNT_ID WHERE a.PLAYER_ID=p.PLAYER_ID AND ${scope.clause}) ACCOUNT_COUNT FROM PLAYERS p ${where} ORDER BY ${order} LIMIT ${input.limit} OFFSET ${(input.page - 1) * input.limit}`,
+      [...scope.args, ...args],
     );
     res.json({ rows, total: counts[0].total });
   });
@@ -39,7 +41,7 @@ export function createPlayersRoutes(db) {
     );
     res.json({ countries: countries.map((r) => r.COUNTRY) });
   });
-  router.post('/players', async (req, res) => {
+  router.post('/players', requireDatabaseAdmin, async (req, res) => {
     const p = playerSchema.parse(req.body),
       keys = Object.keys(p);
     const [result] = await db.execute(
@@ -48,7 +50,7 @@ export function createPlayersRoutes(db) {
     );
     res.status(201).json({ PLAYER_ID: result.insertId });
   });
-  router.put('/players/:id', async (req, res) => {
+  router.put('/players/:id', requireDatabaseAdmin, async (req, res) => {
     const p = playerSchema.parse(req.body);
     const [result] = await db.execute(
       `UPDATE PLAYERS SET ${Object.keys(p)
@@ -59,7 +61,7 @@ export function createPlayersRoutes(db) {
     if (!result.affectedRows) return res.status(404).json({ message: 'Player not found.' });
     res.json({ message: 'Player updated.' });
   });
-  router.delete('/players/:id', async (req, res) => {
+  router.delete('/players/:id', requireDatabaseAdmin, async (req, res) => {
     const [result] = await db.execute('DELETE FROM PLAYERS WHERE PLAYER_ID=?', [
       id.parse(req.params.id),
     ]);

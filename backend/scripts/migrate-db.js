@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { db } from '../src/db.js';
+import { migrateAccessControl } from './migrate-access.js';
 
 // Both fresh installs and upgrades use the same reference data and additive migration.
 export async function migratePlayingStyles(pool) {
@@ -25,8 +26,9 @@ export async function migratePlayingStyles(pool) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     await migratePlayingStyles(db);
+    await migrateAccessControl(db);
     console.log(
-      'Playing-style reference table and squad references are ready. Existing data preserved.',
+      'Playing styles, user roles and squad ownership are ready. Existing data preserved.',
     );
   } finally {
     await db.end();

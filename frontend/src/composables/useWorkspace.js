@@ -32,6 +32,10 @@ function createWorkspace() {
     toast = ref('');
   const login = ref({ email: '', password: '' }),
     loginBusy = ref(false);
+  const canManageDatabase = computed(
+    () => isDemo || ['admin', 'super_admin'].includes(user.value?.ROLE),
+  );
+  const isSuperAdmin = computed(() => !isDemo && user.value?.ROLE === 'super_admin');
   const stats = ref({ positions: [], topPlayers: [], activity: [] }),
     accounts = ref([]),
     players = ref([]),
@@ -176,6 +180,10 @@ function createWorkspace() {
     }
   }
   function openPlayer(p) {
+    if (!canManageDatabase.value) {
+      if (p) openAssign(p);
+      return;
+    }
     form.value = p
       ? Object.fromEntries(
           [
@@ -274,6 +282,7 @@ function createWorkspace() {
     modal.value = { type: 'squadStyle', title: 'Player playing style', player: p };
   }
   function openPlayingStyles() {
+    if (!canManageDatabase.value) return;
     form.value = { NAME: '' };
     formError.value = '';
     modal.value = { type: 'playingStyle', title: 'Playing styles' };
@@ -445,6 +454,9 @@ function createWorkspace() {
     page,
     mobileNav,
     user,
+    canManageDatabase,
+    isSuperAdmin,
+    notify,
     booting,
     loading,
     error,

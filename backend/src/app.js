@@ -8,16 +8,18 @@ import { createAccountsRoutes } from './routes/accounts.js';
 import { createAssignmentsRoutes } from './routes/assignments.js';
 import { createAnalyticsRoutes } from './routes/analytics.js';
 import { createPlayingStylesRoutes } from './routes/playing-styles.js';
+import { createUsersRoutes } from './routes/users.js';
 
 export function createApp(db, transaction) {
   const app = express();
   installSecurity(app);
 
-  app.use('/api', createAuthRoutes(db));
+  app.use('/api', createAuthRoutes(db, transaction));
   app.use('/api', authenticate(db));
+  app.use('/api', createUsersRoutes(db, transaction));
   app.use('/api', createPlayersRoutes(db));
   app.use('/api', createPlayingStylesRoutes(db));
-  app.use('/api', createAccountsRoutes(db));
+  app.use('/api', createAccountsRoutes(db, transaction));
   app.use('/api', createAssignmentsRoutes(db, transaction));
   app.use('/api', createAnalyticsRoutes(db));
 

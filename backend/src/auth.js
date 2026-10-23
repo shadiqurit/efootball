@@ -34,7 +34,7 @@ export function authenticate(db) {
       return res.status(401).json({ message: 'Please sign in to continue.' });
     try {
       const [rows] = await db.execute(
-        'SELECT u.ID, u.NAME, u.EMAIL FROM SESSIONS s JOIN USERS u ON u.ID=s.USER_ID WHERE s.TOKEN_HASH=? AND s.EXPIRES_AT>UTC_TIMESTAMP()',
+        'SELECT u.ID, u.NAME, u.EMAIL, u.ROLE FROM SESSIONS s JOIN USERS u ON u.ID=s.USER_ID WHERE s.TOKEN_HASH=? AND s.EXPIRES_AT>UTC_TIMESTAMP() AND u.IS_ACTIVE=1',
         [digest(token)],
       );
       if (!rows.length)

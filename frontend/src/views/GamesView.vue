@@ -24,6 +24,8 @@ const {
   confirmDelete,
   openRating,
   openHistory,
+  canManageDatabase,
+  isSuperAdmin,
 } = useWorkspace();
 </script>
 
@@ -35,7 +37,7 @@ const {
       <p>Give every account a squad of its own.</p>
     </div>
     <div class="actions">
-      <button class="button secondary" @click="openPlayingStyles()">
+      <button v-if="canManageDatabase" class="button secondary" @click="openPlayingStyles()">
         <Icon name="target" :size="18" />Playing styles
       </button>
       <button class="button primary" @click="openAccount()">
@@ -61,6 +63,7 @@ const {
       </div>
       <h3>{{ a.LABEL }}</h3>
       <p>{{ a.GAME_ID }}</p>
+      <p v-if="isSuperAdmin">Owner: {{ a.OWNER_NAME }}</p>
       <footer>
         <span
           ><strong>{{ a.PLAYER_COUNT }}</strong> players</span
@@ -168,7 +171,9 @@ const {
                   initials(p.NAME)
                 }}</span>
                 <div>
-                  <button class="player-name" @click="openPlayer(p)">{{ p.NAME }}</button
+                  <button v-if="canManageDatabase" class="player-name" @click="openPlayer(p)">
+                    {{ p.NAME }}</button
+                  ><strong v-else class="player-name">{{ p.NAME }}</strong
                   ><small>{{ p.PLAYER_CODE }}</small>
                 </div>
               </div>

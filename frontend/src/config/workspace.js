@@ -4,6 +4,7 @@ export const nav = [
   { id: 'games', name: 'Game IDs & squads', shortName: 'Squads', icon: 'game' },
   { id: 'analytics', name: 'Analytics', shortName: 'Insights', icon: 'chart' },
   { id: 'history', name: 'Rating history', shortName: 'History', icon: 'history' },
+  { id: 'settings', name: 'Account settings', shortName: 'Account', icon: 'shield' },
 ];
 export const positions = [
   'GK',
