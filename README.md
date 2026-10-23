@@ -67,6 +67,8 @@ For a browser-only demo, run `npm run demo`. It uses your 103 players and fictio
 
 ## Separate deployment
 
+For **Windows with PM2 and Nginx** at `efootball.shadiqur.bd`, follow the [PM2 + Nginx deployment steps](deploy/windows/PM2-NGINX.md). The repository includes `ecosystem.config.cjs`, the matching Nginx server blocks, and an API `/health` endpoint.
+
 For **Windows Server 2022 VPS**, use the [IIS + Windows service deployment guide](deploy/windows/README.md). Run `npm run release:windows` locally to create `releases/touchline-windows-vps.zip`, containing the built frontend, separate backend and Windows configuration templates. Generate the real domain settings on the VPS with `Prepare-Config.ps1`; configure HTTPS, MySQL and IIS there. Local `.env`, administrator accounts, backups and dependencies are excluded from the package. The guide includes transferring your existing database with squads and ratings.
 
 | Project | Example URL | Upload |

@@ -23,6 +23,10 @@ export function createApp(db, transaction) {
 
   app.use('/api', (req, res) => res.status(404).json({ message: 'API route not found.' }));
   app.get('/', (req, res) => res.json({ service: 'Touchline API', status: 'ok' }));
+  app.get('/health', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json({ service: 'Touchline API', status: 'ok' });
+  });
   app.use((req, res) => res.status(404).json({ message: 'Route not found.' }));
   app.use(errorHandler);
   return app;

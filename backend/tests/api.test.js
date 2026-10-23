@@ -100,6 +100,10 @@ test('backend root is API status JSON and frontend files are never served', asyn
   const response = await fetch(base + '/');
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { service: 'Touchline API', status: 'ok' });
+  const health = await fetch(base + '/health');
+  assert.equal(health.status, 200);
+  assert.equal(health.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await health.json(), { service: 'Touchline API', status: 'ok' });
   for (const path of ['/index.html', '/config.js', '/assets/index.js'])
     assert.equal((await fetch(base + path)).status, 404);
 });
