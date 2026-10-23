@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { id, assignmentSchema, rating } from '../validation.js';
+import { id, assignmentSchema, assignmentStyleSchema, rating } from '../validation.js';
 
 export function createAssignmentsRoutes(db, transaction) {
   const router = Router();
   router.get('/assignments', async (req, res) => {
     const accountId = id.parse(req.query.accountId);
     const [rows] = await db.execute(
-      'SELECT p.*,a.ID ASSIGNMENT_ID,a.RATING,a.UPDATED_AT FROM ASSIGNMENTS a JOIN PLAYERS p ON p.PLAYER_ID=a.PLAYER_ID WHERE a.GAME_ACCOUNT_ID=? ORDER BY a.RATING DESC,p.NAME',
+      'SELECT p.*,a.ID ASSIGNMENT_ID,a.RATING,a.PLAYING_STYLE_ID,s.NAME PLAYING_STYLE,a.CREATED_AT ASSIGNED_AT,a.UPDATED_AT FROM ASSIGNMENTS a JOIN PLAYERS p ON p.PLAYER_ID=a.PLAYER_ID LEFT JOIN PLAYING_STYLES s ON s.ID=a.PLAYING_STYLE_ID WHERE a.GAME_ACCOUNT_ID=? ORDER BY a.RATING DESC,p.NAME',
       [accountId],
     );
     res.json(rows);
@@ -16,8 +16,8 @@ export function createAssignmentsRoutes(db, transaction) {
     const a = assignmentSchema.parse(req.body);
     const assignmentId = await transaction(async (conn) => {
       const [result] = await conn.execute(
-        'INSERT INTO ASSIGNMENTS (GAME_ACCOUNT_ID,PLAYER_ID,RATING) VALUES (?,?,?)',
-        [a.GAME_ACCOUNT_ID, a.PLAYER_ID, a.RATING],
+        'INSERT INTO ASSIGNMENTS (GAME_ACCOUNT_ID,PLAYER_ID,RATING,PLAYING_STYLE_ID) VALUES (?,?,?,?)',
+        [a.GAME_ACCOUNT_ID, a.PLAYER_ID, a.RATING, a.PLAYING_STYLE_ID],
       );
       await conn.execute(
         'INSERT INTO RATING_HISTORY (ASSIGNMENT_ID,NEW_RATING,CHANGED_BY) VALUES (?,?,?)',
@@ -26,6 +26,15 @@ export function createAssignmentsRoutes(db, transaction) {
       return result.insertId;
     });
     res.status(201).json({ ID: assignmentId });
+  });
+  router.patch('/assignments/:id/playing-style', async (req, res) => {
+    const { PLAYING_STYLE_ID } = assignmentStyleSchema.parse(req.body);
+    const [result] = await db.execute('UPDATE ASSIGNMENTS SET PLAYING_STYLE_ID=? WHERE ID=?', [
+      PLAYING_STYLE_ID,
+      id.parse(req.params.id),
+    ]);
+    if (!result.affectedRows) return res.status(404).json({ message: 'Assignment not found.' });
+    res.json({ message: 'Playing style updated.' });
   });
   router.patch('/assignments/:id/rating', async (req, res) => {
     const assignmentId = id.parse(req.params.id),

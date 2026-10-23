@@ -8,7 +8,7 @@ const { navigate, stats, formatDate } = useWorkspace();
   <div class="page-heading">
     <div>
       <span class="eyebrow">EVERY CHANGE TELLS A STORY</span>
-      <h1>Rating history<span class="green">.</span></h1>
+      <h1>Rating history<span class="accent-text">.</span></h1>
       <p>
         The latest 8 rating changes across your squads. Open a squad player’s history for up to 100
         changes.

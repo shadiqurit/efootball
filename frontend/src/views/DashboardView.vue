@@ -17,9 +17,9 @@ const {
 <template>
   <div class="page-heading">
     <div>
-      <span class="eyebrow">THE BIG PICTURE</span>
-      <h1>Your game, at a glance<span class="green">.</span></h1>
-      <p>Your players, squads and progress. All in one place.</p>
+      <span class="eyebrow">YOUR CLUB, CONNECTED</span>
+      <h1>Welcome to the touchline<span class="accent-text">.</span></h1>
+      <p>Your collection. Your squads. A clear view of the whole game.</p>
     </div>
     <button class="button primary" @click="openPlayer()">
       <Icon name="plus" :size="18" />Add player
@@ -28,14 +28,18 @@ const {
   <section class="hero-card">
     <div class="hero-copy">
       <span class="hero-tag"><span></span>YOUR PERSONAL FOOTBALL HQ</span>
-      <h2>Every player.<br />Every possibility.</h2>
-      <p>
-        Turn your player collection into your next great squad.<br class="desktop-break" />
-        The next move is yours.
-      </p>
-      <button class="button lime" @click="navigate('players')">
-        Explore player database<Icon name="arrow" :size="18" />
-      </button>
+      <h2>Build your<br /><em>next great squad.</em></h2>
+      <p>Discover the right players, bring your game IDs together and make every position count.</p>
+      <div class="hero-actions">
+        <button class="button primary hero-cta" @click="navigate('players')">
+          Explore players<Icon name="arrow" :size="18" /></button
+        ><button class="button secondary" @click="openAccount()">
+          <Icon name="plus" :size="17" />Create game ID
+        </button>
+      </div>
+      <div class="hero-footer">
+        <Icon name="shield" :size="14" />Your players and ratings, in one private workspace.
+      </div>
     </div>
     <div class="pitch-art" aria-hidden="true">
       <div class="pitch-lines">
@@ -53,17 +57,17 @@ const {
         ><span class="pitch-player p11">GK</span>
       </div>
       <div class="formation-label">
-        <span>THE POSSIBILITIES ARE ENDLESS</span><strong>Make every position count.</strong>
+        <span>YOUR NEXT STARTING ELEVEN</span><strong>One squad. Endless possibilities.</strong>
       </div>
     </div>
-    <span class="hero-number">01 / YOUR WORKSPACE</span>
+    <span class="hero-number">TOUCHLINE / THE CLUBHOUSE</span>
   </section>
   <div class="stat-grid">
     <article class="stat-card">
       <div>
-        <span>Total players</span><span class="stat-icon green-icon"><Icon name="users" /></span>
+        <span>Total players</span><span class="stat-icon indigo-icon"><Icon name="users" /></span>
       </div>
-      <strong>{{ stats.PLAYERS ?? '—' }}</strong>
+      <strong>{{ stats.PLAYERS == null ? '—' : Number(stats.PLAYERS).toLocaleString() }}</strong>
       <p><span class="tiny-dot"></span>In your master database</p>
     </article>
     <article class="stat-card">
@@ -78,7 +82,9 @@ const {
         <span>Assigned players</span
         ><span class="stat-icon orange-icon"><Icon name="shield" /></span>
       </div>
-      <strong>{{ stats.ASSIGNMENTS ?? '—' }}</strong>
+      <strong>{{
+        stats.ASSIGNMENTS == null ? '—' : Number(stats.ASSIGNMENTS).toLocaleString()
+      }}</strong>
       <p>Across all your squads</p>
     </article>
     <article class="stat-card">

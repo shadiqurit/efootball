@@ -14,13 +14,26 @@ The frontend and backend are independent projects. Each has its own `package.jso
 | Navigation and position options | `frontend/src/config/workspace.js` |
 | Shared frontend state, loading and save actions | `frontend/src/composables/useWorkspace.js` |
 | Player initials, date formatting, position colors | `frontend/src/utils/player-format.js` |
-| Layout and appearance | `frontend/src/style.css` |
+| Color palette and spacing tokens | `frontend/src/styles/tokens.css` |
+| App shell, sidebar and top bar | `frontend/src/styles/layout.css` |
+| Cards, tables, buttons and dialogs | `frontend/src/styles/components.css` |
+| Dashboard, login and feature-specific styling | `frontend/src/styles/pages.css` |
+| Phone/tablet/desktop layouts | `frontend/src/styles/responsive.css` |
+| Mobile navigation keyboard/focus handling | `frontend/src/composables/useNavigationDrawer.js` |
 | API requests and error handling | `frontend/src/http.js` |
 | Deployed API URL | Uploaded frontend `config.js` |
 | Player endpoints and player SQL | `backend/src/routes/players.js` |
 | Game ID endpoints and SQL | `backend/src/routes/accounts.js` |
 | Assignment/rating/history endpoints and transactions | `backend/src/routes/assignments.js` |
 | Analytics queries | `backend/src/routes/analytics.js` |
+| Playing-style reference list | `backend/src/routes/playing-styles.js` |
+| Playing-style migration and starter references | `backend/scripts/migrate-db.js` and `backend/database/migrations/002_playing_styles.sql` |
+| CSV escaping, columns and squad export details | `frontend/src/utils/csv-export.js` |
+| Selected squad sorting and export order | `frontend/src/utils/squad-sort.js` and `useWorkspace.js` |
+| Selected squad name search and CSV filtering | `frontend/src/utils/squad-filter.js` and `useWorkspace.js` |
+| Searchable playing-style selector | `frontend/src/components/PlayingStyleSelect.vue` |
+| Windows Server 2022 VPS setup | `deploy/windows/README.md`, `Prepare-Config.ps1` and XML templates |
+| Rebuild the Windows deployment ZIP | `npm run release:windows` / `deploy/windows/Build-Package.ps1` |
 | Login/logout/session endpoints | `backend/src/routes/auth.js` |
 | Password/session helpers | `backend/src/auth.js` |
 | Request field validation | `backend/src/validation.js` |
@@ -46,6 +59,12 @@ Use `transaction()` for operations that must succeed together. Rating writes mus
 `App.vue` calls `provideWorkspace()` once. Views and dialogs call `useWorkspace()` to access that same set of Vue refs and actions. This preserves state when switching screens and avoids duplicating login/refresh requests. Add a new shared value to the composable's returned object, then destructure it only in the view that needs it. Display helpers and navigation constants are in small separate modules.
 
 `api.js` chooses the real API or the explicitly enabled demo adapter. `http.js` handles normal requests, credentials and errors. The production build removes the optional demo code. Do not import backend files into frontend source.
+
+The stylesheet entry `src/style.css` imports focused CSS files from `src/styles/`. The interface uses local system fonts, CSS illustrations and existing SVG icons. At 900px and below, navigation moves to a bottom bar with a keyboard-accessible drawer; 901–1150px uses a compact sidebar rail. At 700px and below, data tables become labeled cards. Smaller overrides at 430px/360px keep forms and controls usable. `prefers-reduced-motion` is respected. To change the theme, start with `styles/tokens.css` rather than layering duplicate overrides.
+
+The current light theme uses white surfaces, royal blue actions and peach accents against blue/violet hero panels. Shared colors are in `tokens.css`; hero/pitch gradients are in `pages.css`, and position badges are in `components.css`. Keep small text contrast at least 4.5:1 when adjusting colors.
+
+Typography uses a 16px root with shared size tokens in `tokens.css`: 16px body text, 15px labels, 14px supporting text and 12px metadata. Responsive rules use the same tokens. Main text is near-black; secondary text is dark gray. Keep text at natural width and allow wrapping instead of squeezing letters or shrinking text on phones.
 
 ## Typical changes
 
@@ -77,4 +96,4 @@ npm test
 
 The frontend also supports `npm run build`; the backend has no build step. Formatter packages are development dependencies. Production backend installs use `npm ci --omit=dev`.
 
-The automated API tests use a database double. After database/schema or deployment changes, additionally test login, CRUD, assignments, ratings and history against real MySQL. Browser visual verification and real MySQL execution have not been completed in this development environment.
+The automated API tests use a database double. A local MySQL 8.0.46 check has also verified all 32,622 Excel records field by field, plus login, CRUD, assignments, ratings and history. Repeat real-database smoke checks after database/schema or deployment changes. Browser visual verification remains unavailable in this environment.

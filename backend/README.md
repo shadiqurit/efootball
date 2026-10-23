@@ -4,7 +4,7 @@ Standalone API project. Requires Node.js **22.12+**, MySQL **8.0.16+**, InnoDB a
 
 ## Code maintenance
 
-Feature handlers and SQL are grouped in `src/routes/auth.js`, `players.js`, `accounts.js`, `assignments.js` and `analytics.js`. Request security and shared error responses are in `src/middleware/`; input rules are in `src/validation.js`. `src/app.js` only assembles the application. Add behavior-focused tests in `tests/` when changing API behavior.
+Feature handlers and SQL are grouped in `src/routes/auth.js`, `players.js`, `playing-styles.js`, `accounts.js`, `assignments.js` and `analytics.js`. Request security and shared error responses are in `src/middleware/`; input rules are in `src/validation.js`. `src/app.js` only assembles the application. Add behavior-focused tests in `tests/` when changing API behavior.
 
 Use `npm run format` or `npm run format:check` for consistent formatting. Prettier is a development dependency; `npm ci --omit=dev` excludes it in production. No imports reference frontend files.
 
@@ -32,7 +32,9 @@ npm run dev
 
 Remove `ADMIN_PASSWORD` after admin creation. Existing administrators are not overwritten; there is no default password/public registration.
 
-API prefix: `http://127.0.0.1:3000/api`. The server root returns `{"service":"Touchline API","status":"ok"}`. It never serves Vue files.
+API prefix: `http://127.0.0.1:3005/api`. The server root returns `{"service":"Touchline API","status":"ok"}`. It never serves Vue files. Match frontend `DEV_API_TARGET` to backend `PORT` if changing the port. In development only, localhost and 127.0.0.1 frontend origins are interchangeable on the configured scheme/port; production requires the exact origin.
+
+The API listens on `HOST` (default `127.0.0.1`). Keep loopback behind a local reverse proxy. Configure a different interface explicitly only when your hosting network requires it. For a Windows Server 2022 VPS, use the repository's `deploy/windows/README.md` and its separate production environment template.
 
 ## cPanel / shared hosting
 
@@ -64,7 +66,7 @@ npm run db:setup
 npm run db:import
 ```
 
-Set the administrator variables, run `npm run admin:create`, then remove `ADMIN_PASSWORD`. Alternatively, use phpMyAdmin to import `database/schema.sql` and then `database/players-seed.sql` **once into an empty player table**; skip the CLI database setup/import in that case. Admin creation still requires a Node command runner/terminal.
+Set the administrator variables, run `npm run admin:create`, then remove `ADMIN_PASSWORD`. Alternatively, use phpMyAdmin to import `database/schema.sql` and then `database/players-seed.sql` **once into an empty player table**; run `npm run db:migrate` afterward to seed the playing-style reference list. Admin creation still requires a Node command runner/terminal.
 
 6. Restart the application. Check status JSON at the API domain root. In the separately deployed frontend's `config.js`, set `apiUrl` to `https://api.example.com/api`.
 7. Verify login, player editing, game ID creation, assignments, rating updates and history against the actual MySQL database before using production records.
@@ -81,7 +83,15 @@ If login succeeds but subsequent requests return 401, check HTTPS, the API URL, 
 
 ## Maintenance
 
-Original files are in `data/`; do not import the Oracle SQL directly into MySQL. `db:import` reads both files, preserving edits by skipping existing codes. `db:seed-file` regenerates the phpMyAdmin seed. Schema creation uses `IF NOT EXISTS` and does not drop records.
+For an existing installation, back up MySQL, upload the updated backend, run `npm run db:migrate` from this directory, and restart the Node application before deploying the updated frontend. The additive migration creates `PLAYING_STYLES`, seeds 22 starter references and adds nullable `ASSIGNMENTS.PLAYING_STYLE_ID` with a foreign key. It is safe to rerun and preserves existing players, assignments, ratings and history. Fresh `db:setup` runs this migration automatically.
+
+Authenticated users can list/add references with `GET/POST /api/playing-styles`. `PATCH /api/assignments/:id/playing-style` accepts `{ "PLAYING_STYLE_ID": 1 }` or `null` to clear it. Assignment creation also accepts the optional style ID. Styles belong to individual squad assignments; changing a style leaves rating timestamps and history untouched. `GET /api/assignments?accountId=...` returns style ID/name and the assignment creation timestamp for detailed exports.
+
+Original files are in `data/`; do not import the Oracle SQL directly into MySQL. `db:import` now imports all 32,622 records from the typed Excel extraction, preserving edits by skipping existing matching IDs. Conflicting IDs stop the import. `db:import:legacy` retains the smaller SQL/CSV importer. `db:seed-file` regenerates the full phpMyAdmin seed. Schema creation uses `IF NOT EXISTS` and does not drop records.
+
+`PLAYER_ID` is the player identity; different players can share `PLAYER_CODE`. The importer removes the old `uq_player_code` index when present and adds a regular code index. Existing installations can also apply `database/migrations/001_allow_shared_player_codes.sql` manually. An unchanged initial 103-player seed with no squads can be reconciled once using `npm run db:import:excel -- --replace-initial-seed`; a backup is saved first. This mode refuses edited or assigned data.
+
+To read a newer workbook locally: install Python/openpyxl and run `python scripts/extract-excel.py`, then import the resulting JSON. The workbook remains unchanged. Shared hosting only needs the generated JSON, not Python. Data-quality observations are recorded in `data/players-import-report.json`; missing positions and unusual source heights remain untouched.
 
 ```sh
 npm test
@@ -89,4 +99,4 @@ npm audit
 npm start
 ```
 
-15 backend tests pass using a controlled database double; they do not verify real MySQL execution. Passwords use scrypt, sessions expire in 12 hours, and rating/history writes share a locked transaction. Back up MySQL before imports or irreversible record deletion.
+19 backend tests pass using a controlled database double. A real local MySQL smoke check additionally passed full Excel/database reconciliation, login, session access, listing, analytics, assignment, rating updates and history. Login through the development proxy also passes on both localhost and 127.0.0.1. Browser visual verification remains unavailable. Passwords use scrypt, sessions expire in 12 hours, and rating/history writes share a locked transaction. Back up MySQL before imports or irreversible record deletion.

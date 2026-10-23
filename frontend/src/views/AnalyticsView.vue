@@ -8,7 +8,7 @@ const { analyticsId, accounts, stats, initials, roleClass } = useWorkspace();
   <div class="page-heading">
     <div>
       <span class="eyebrow">THE NUMBERS BEHIND YOUR SQUAD</span>
-      <h1>A little more insight<span class="green">.</span></h1>
+      <h1>Know your squad<span class="accent-text">.</span></h1>
       <p>Understand your collection. Make your next move count.</p>
     </div>
     <select v-model="analyticsId" aria-label="Analyze game ID">
@@ -104,28 +104,28 @@ const { analyticsId, accounts, stats, initials, roleClass } = useWorkspace();
       </div>
     </div>
     <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>GAME ID</th>
-            <th>PLATFORM</th>
-            <th>PLAYERS</th>
-            <th>AVERAGE RATING</th>
-            <th>BEST RATING</th>
+      <table role="table">
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader">GAME ID</th>
+            <th role="columnheader">PLATFORM</th>
+            <th role="columnheader">PLAYERS</th>
+            <th role="columnheader">AVERAGE RATING</th>
+            <th role="columnheader">BEST RATING</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="a in accounts" :key="a.ID">
-            <td>
+        <tbody role="rowgroup">
+          <tr role="row" v-for="a in accounts" :key="a.ID">
+            <td role="cell" data-label="Game ID">
               <strong>{{ a.LABEL }}</strong
               ><small class="cell-secondary">{{ a.GAME_ID }}</small>
             </td>
-            <td>{{ a.PLATFORM }}</td>
-            <td>{{ a.PLAYER_COUNT }}</td>
-            <td>
+            <td role="cell" data-label="Platform">{{ a.PLATFORM }}</td>
+            <td role="cell" data-label="Players">{{ a.PLAYER_COUNT }}</td>
+            <td role="cell" data-label="Average rating">
               <span class="rating-badge subtle">{{ a.AVG_RATING ?? '—' }}</span>
             </td>
-            <td>{{ a.BEST_RATING ?? '—' }}</td>
+            <td role="cell" data-label="Best rating">{{ a.BEST_RATING ?? '—' }}</td>
           </tr>
         </tbody>
       </table>

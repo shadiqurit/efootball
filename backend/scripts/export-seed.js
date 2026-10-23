@@ -1,9 +1,17 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import mysql from 'mysql2';
 import { sourcePlayers } from './source-data.js';
-const players = await sourcePlayers();
+let players;
+try {
+  players = JSON.parse(
+    await readFile(new URL('../data/players-excel.json', import.meta.url), 'utf8'),
+  );
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error;
+  players = await sourcePlayers();
+}
 const sql =
-  '-- Generated from PLAYERS.sql and FootballPlayers.csv. Import once into an EMPTY PLAYERS table.\nSET NAMES utf8mb4;\nSTART TRANSACTION;\n' +
+  '-- Generated from the full Excel extraction when available. Import once into an EMPTY PLAYERS table.\nSET NAMES utf8mb4;\nSTART TRANSACTION;\n' +
   players
     .map(
       (p) =>

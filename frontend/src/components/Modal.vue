@@ -11,7 +11,6 @@ const focusable = () => [
   ),
 ];
 function keydown(e) {
-  if (e.key === 'Escape') emit('close');
   if (e.key === 'Tab') {
     const items = focusable(),
       first = items[0],
@@ -39,7 +38,7 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <Teleport to="body"
-    ><div class="modal-backdrop" @click.self="emit('close')">
+    ><div class="modal-backdrop">
       <section
         ref="panel"
         class="modal"

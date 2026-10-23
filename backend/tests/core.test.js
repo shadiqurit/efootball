@@ -79,6 +79,10 @@ test('validation rejects invalid ratings, dates, identifiers, arbitrary fields a
     false,
   );
   assert.equal(playerSchema.safeParse({ ...player, UPD_BY: 1 }).success, false);
+  assert.equal(
+    playerSchema.safeParse({ ...player, POSITION: null, POSITION_CODE: null }).success,
+    true,
+  );
   assert.equal(listSchema.safeParse({ limit: 100000 }).success, false);
   assert.equal(listSchema.safeParse({ sort: 'NAME;DROP TABLE PLAYERS' }).success, false);
 });

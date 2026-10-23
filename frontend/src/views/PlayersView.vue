@@ -27,8 +27,8 @@ const {
 <template>
   <div class="page-heading">
     <div>
-      <span class="eyebrow">THE FOUNDATION OF YOUR GAME</span>
-      <h1>Player database<span class="green">.</span></h1>
+      <span class="eyebrow">FIND YOUR DIFFERENCE-MAKER</span>
+      <h1>Player database<span class="accent-text">.</span></h1>
       <p>Your complete player collection. Ready for the next lineup.</p>
     </div>
     <div class="actions">
@@ -44,6 +44,7 @@ const {
       <div class="search-field">
         <Icon name="search" :size="18" /><input
           v-model="query"
+          class="search-input"
           aria-label="Search players"
           placeholder="Search by name or player code…"
         /><button v-if="query" class="icon-button" aria-label="Clear search" @click="query = ''">
@@ -64,7 +65,7 @@ const {
     </div>
     <div class="table-caption">
       <span
-        ><strong>{{ total }}</strong> players found</span
+        ><strong>{{ Number(total).toLocaleString() }}</strong> players found</span
       ><button
         v-if="query || position || country"
         class="text-button"
@@ -78,21 +79,21 @@ const {
       ><span v-else class="muted">Your master collection</span>
     </div>
     <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>PLAYER</th>
-            <th>POSITION</th>
-            <th>COUNTRY</th>
-            <th>FOOT / HEIGHT</th>
-            <th>GAME IDS</th>
-            <th>UPDATED</th>
-            <th class="align-right">ACTIONS</th>
+      <table role="table">
+        <thead role="rowgroup">
+          <tr role="row">
+            <th role="columnheader">PLAYER</th>
+            <th role="columnheader">POSITION</th>
+            <th role="columnheader">COUNTRY</th>
+            <th role="columnheader">FOOT / HEIGHT</th>
+            <th role="columnheader">GAME IDS</th>
+            <th role="columnheader">UPDATED</th>
+            <th role="columnheader" class="align-right">ACTIONS</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="p in players" :key="p.PLAYER_ID">
-            <td>
+        <tbody role="rowgroup">
+          <tr role="row" v-for="p in players" :key="p.PLAYER_ID">
+            <td role="cell" data-label="Player">
               <div class="player-cell">
                 <span class="player-avatar" :class="roleClass(p.POSITION)">{{
                   initials(p.NAME)
@@ -106,22 +107,22 @@ const {
                 </div>
               </div>
             </td>
-            <td>
+            <td role="cell" data-label="Position">
               <span class="position-badge" :class="roleClass(p.POSITION)">{{
                 p.POSITION_CODE
               }}</span
               ><small class="cell-secondary">{{ p.SUB_POSITION || p.POSITION }}</small>
             </td>
-            <td>{{ p.COUNTRY || '—' }}</td>
-            <td>
+            <td role="cell" data-label="Country">{{ p.COUNTRY || '—' }}</td>
+            <td role="cell" data-label="Foot / height">
               <span class="capitalize">{{ p.FOOT || '—' }}</span
               ><small class="cell-secondary">{{ p.HEIGHT_CM ? `${p.HEIGHT_CM} cm` : '—' }}</small>
             </td>
-            <td>
+            <td role="cell" data-label="Game IDs">
               <span class="assignment-count">{{ p.ACCOUNT_COUNT || 0 }}</span>
             </td>
-            <td class="date-cell">{{ formatDate(p.UPD_DATE) }}</td>
-            <td>
+            <td role="cell" data-label="Updated" class="date-cell">{{ formatDate(p.UPD_DATE) }}</td>
+            <td role="cell" data-label="Actions" class="actions-cell">
               <div class="row-actions">
                 <button
                   class="assign-button"

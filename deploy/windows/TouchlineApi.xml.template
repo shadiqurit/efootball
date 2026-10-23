@@ -1,0 +1,24 @@
+<service>
+  <id>TouchlineApi</id>
+  <name>Touchline API</name>
+  <description>Touchline Node.js API behind IIS; MySQL player and squad management.</description>
+  <executable>__NODE__</executable>
+  <arguments>src/index.js</arguments>
+  <workingdirectory>__ROOT__\backend</workingdirectory>
+  <env name="NODE_ENV" value="production" />
+  <env name="HOST" value="127.0.0.1" />
+  <env name="PORT" value="3005" />
+  <serviceaccount>
+    <username>NT AUTHORITY\LocalService</username>
+  </serviceaccount>
+  <startmode>Automatic</startmode>
+  <delayedAutoStart>true</delayedAutoStart>
+  <stoptimeout>15 sec</stoptimeout>
+  <onfailure action="restart" delay="10 sec" />
+  <resetfailure>1 hour</resetfailure>
+  <logpath>__ROOT__\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+</service>

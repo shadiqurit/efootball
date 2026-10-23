@@ -14,8 +14,13 @@ if (
 if (process.env.NODE_ENV === 'production' && !process.env.APP_ORIGIN.startsWith('https://'))
   throw new Error('Production requires an HTTPS APP_ORIGIN.');
 await db.query("SET time_zone = '+00:00'");
-const server = createApp(db, transaction).listen(Number(process.env.PORT || 3000), () =>
-  console.log(`Touchline API listening on port ${process.env.PORT || 3000}`),
+const server = createApp(db, transaction).listen(
+  Number(process.env.PORT || 3005),
+  process.env.HOST || '127.0.0.1',
+  () =>
+    console.log(
+      `Touchline API listening on ${process.env.HOST || '127.0.0.1'}:${process.env.PORT || 3005}`,
+    ),
 );
 async function shutdown() {
   server.close(async () => {

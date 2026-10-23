@@ -83,6 +83,30 @@ try {
 }
 if (!state?.players || !state?.accounts || !state?.assignments || !state?.history)
   state = initial();
+state.playingStyles ||= [
+  'Goal Poacher',
+  'Dummy Runner',
+  'Fox in the Box',
+  'Target Man',
+  'Deep-Lying Forward',
+  'Creative Playmaker',
+  'Prolific Winger',
+  'Roaming Flank',
+  'Cross Specialist',
+  'Classic No. 10',
+  'Hole Player',
+  'Box-to-Box',
+  'The Destroyer',
+  'Orchestrator',
+  'Anchor Man',
+  'Build Up',
+  'Extra Frontman',
+  'Offensive Full-back',
+  'Full-back Finisher',
+  'Defensive Full-back',
+  'Offensive Goalkeeper',
+  'Defensive Goalkeeper',
+].map((NAME, i) => ({ ID: i + 1, NAME }));
 const persist = () => localStorage.setItem(key, JSON.stringify(state));
 const nextId = (rows) => Math.max(0, ...rows.map((r) => r.ID || r.PLAYER_ID)) + 1;
 const fail = (message) => {
@@ -97,6 +121,8 @@ export async function demoRequest(path, method, body) {
   let out;
   if (route.startsWith('/auth'))
     return { ID: 1, NAME: 'Demo manager', EMAIL: 'demo@touchline.local' };
+  if (route === '/playing-styles' && method === 'GET')
+    return [...state.playingStyles].sort((a, b) => a.NAME.localeCompare(b.NAME));
   if (route === '/filters')
     return { countries: [...new Set(state.players.map((p) => p.COUNTRY).filter(Boolean))].sort() };
   if (route === '/players' && method === 'GET') {
@@ -125,7 +151,14 @@ export async function demoRequest(path, method, body) {
       })),
     };
   }
-  if (/^\/players(?:\/\d+)?$/.test(route)) {
+  if (route === '/playing-styles' && method === 'POST') {
+    required(body.NAME, 'Playing style');
+    const NAME = body.NAME.trim();
+    if (state.playingStyles.some((s) => s.NAME.toLowerCase() === NAME.toLowerCase()))
+      fail('This playing style already exists.');
+    out = { ID: nextId(state.playingStyles), NAME };
+    state.playingStyles.push(out);
+  } else if (/^\/players(?:\/\d+)?$/.test(route)) {
     const playerId = Number(route.split('/')[2]);
     if (method === 'DELETE') {
       if (state.assignments.some((a) => a.PLAYER_ID === playerId))
@@ -133,8 +166,6 @@ export async function demoRequest(path, method, body) {
       state.players = state.players.filter((p) => p.PLAYER_ID !== playerId);
     } else {
       const p = validatePlayer(body);
-      if (state.players.some((r) => r.PLAYER_CODE === p.PLAYER_CODE && r.PLAYER_ID !== playerId))
-        fail('This player code already exists.');
       const row = {
         ...p,
         UPD_DATE: new Date().toISOString(),
@@ -177,6 +208,9 @@ export async function demoRequest(path, method, body) {
         ...byId(state.players, a.PLAYER_ID, 'PLAYER_ID'),
         ASSIGNMENT_ID: a.ID,
         RATING: a.RATING,
+        PLAYING_STYLE_ID: a.PLAYING_STYLE_ID ?? null,
+        PLAYING_STYLE: state.playingStyles.find((s) => s.ID === a.PLAYING_STYLE_ID)?.NAME ?? null,
+        ASSIGNED_AT: a.CREATED_AT || a.UPDATED_AT,
         UPDATED_AT: a.UPDATED_AT,
       }))
       .sort((a, b) => b.RATING - a.RATING);
@@ -184,13 +218,19 @@ export async function demoRequest(path, method, body) {
     const a = validateAssignment(body);
     byId(state.players, a.PLAYER_ID, 'PLAYER_ID');
     byId(state.accounts, a.GAME_ACCOUNT_ID);
+    if (a.PLAYING_STYLE_ID != null) byId(state.playingStyles, a.PLAYING_STYLE_ID);
     if (
       state.assignments.some(
         (r) => r.GAME_ACCOUNT_ID === a.GAME_ACCOUNT_ID && r.PLAYER_ID === a.PLAYER_ID,
       )
     )
       fail('This player is already in that squad.');
-    const row = { ...a, ID: nextId(state.assignments), UPDATED_AT: new Date().toISOString() };
+    const row = {
+      ...a,
+      ID: nextId(state.assignments),
+      CREATED_AT: new Date().toISOString(),
+      UPDATED_AT: new Date().toISOString(),
+    };
     state.assignments.push(row);
     state.history.push({
       ID: nextId(state.history),
@@ -200,6 +240,10 @@ export async function demoRequest(path, method, body) {
       CHANGED_BY_NAME: 'Demo manager',
       CHANGED_AT: row.UPDATED_AT,
     });
+  } else if (/^\/assignments\/\d+\/playing-style$/.test(route) && method === 'PATCH') {
+    const a = byId(state.assignments, route.split('/')[2]);
+    if (body.PLAYING_STYLE_ID != null) byId(state.playingStyles, body.PLAYING_STYLE_ID);
+    a.PLAYING_STYLE_ID = body.PLAYING_STYLE_ID;
   } else if (/^\/assignments\/\d+\/history$/.test(route)) {
     return state.history
       .filter((h) => h.ASSIGNMENT_ID === Number(route.split('/')[2]))

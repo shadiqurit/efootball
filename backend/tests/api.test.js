@@ -144,7 +144,12 @@ test('assignment and initial rating history are created in one transaction', asy
   });
   assert.equal(result.response.status, 201);
   assert.equal(txCalls, 1);
-  assert.deepEqual(calls.find((c) => c.sql.startsWith('INSERT INTO ASSIGNMENTS')).args, [2, 5, 99]);
+  assert.deepEqual(calls.find((c) => c.sql.startsWith('INSERT INTO ASSIGNMENTS')).args, [
+    2,
+    5,
+    99,
+    null,
+  ]);
   assert.deepEqual(
     calls.find((c) => c.sql.startsWith('INSERT INTO RATING_HISTORY')).args,
     [10, 99, 1],
@@ -171,6 +176,93 @@ test('rating changes lock the assignment and record the previous value; unchange
   calls = [];
   await request('/assignments/10/rating', 'PATCH', { RATING: 95 });
   assert.ok(!calls.some((c) => c.sql.startsWith('INSERT INTO RATING_HISTORY')));
+});
+
+test('playing-style references are authenticated, validated and stored as bound values', async () => {
+  assert.equal(
+    (await request('/playing-styles', 'GET', undefined, { cookie: '' })).response.status,
+    401,
+  );
+  impl = async (sql) =>
+    sql.startsWith('SELECT ID,NAME')
+      ? [
+          [
+            { ID: 1, NAME: 'Fox in the Box' },
+            { ID: 2, NAME: 'Goal Poacher' },
+          ],
+        ]
+      : [{ insertId: 3 }];
+  const list = await request('/playing-styles');
+  assert.equal(list.response.status, 200);
+  assert.equal(list.data[0].NAME, 'Fox in the Box');
+  const name = "Custom ' style";
+  const created = await request('/playing-styles', 'POST', { NAME: name });
+  assert.equal(created.response.status, 201);
+  assert.equal(created.data.NAME, name);
+  const insert = calls.find((c) => c.sql.startsWith('INSERT INTO PLAYING_STYLES'));
+  assert.deepEqual(insert.args, [name]);
+  assert.ok(!insert.sql.includes(name));
+  assert.equal((await request('/playing-styles', 'POST', { NAME: '   ' })).response.status, 400);
+  assert.equal(
+    (await request('/playing-styles', 'POST', { NAME: 'x'.repeat(101) })).response.status,
+    400,
+  );
+});
+
+test('squads expose optional styles and style changes preserve ratings and history', async () => {
+  impl = async (sql) =>
+    sql.startsWith('SELECT p.*')
+      ? [[{ ASSIGNMENT_ID: 10, RATING: 99, PLAYING_STYLE_ID: 2, PLAYING_STYLE: 'Goal Poacher' }]]
+      : [{ affectedRows: 1, insertId: 10 }];
+  const list = await request('/assignments?accountId=2');
+  assert.equal(list.response.status, 200);
+  assert.equal(list.data[0].PLAYING_STYLE, 'Goal Poacher');
+  assert.match(calls.find((c) => c.sql.startsWith('SELECT p.*')).sql, /LEFT JOIN PLAYING_STYLES/);
+  calls = [];
+  assert.equal(
+    (await request('/assignments/10/playing-style', 'PATCH', { PLAYING_STYLE_ID: 2 })).response
+      .status,
+    200,
+  );
+  const update = calls.find((c) => c.sql.startsWith('UPDATE ASSIGNMENTS'));
+  assert.deepEqual(update.args, [2, 10]);
+  assert.ok(!update.sql.includes('RATING'));
+  assert.ok(!calls.some((c) => c.sql.includes('RATING_HISTORY')));
+  assert.equal(
+    (await request('/assignments/10/playing-style', 'PATCH', { PLAYING_STYLE_ID: null })).response
+      .status,
+    200,
+  );
+  for (const body of [{}, { PLAYING_STYLE_ID: 0 }, { PLAYING_STYLE_ID: 2, RATING: 80 }])
+    assert.equal(
+      (await request('/assignments/10/playing-style', 'PATCH', body)).response.status,
+      400,
+    );
+  const created = await request('/assignments', 'POST', {
+    PLAYER_ID: 5,
+    GAME_ACCOUNT_ID: 2,
+    RATING: 90,
+    PLAYING_STYLE_ID: 2,
+  });
+  assert.equal(created.response.status, 201);
+  assert.deepEqual(
+    calls.find((c) => c.sql.startsWith('INSERT INTO ASSIGNMENTS')).args,
+    [2, 5, 90, 2],
+  );
+  impl = async () => [{ affectedRows: 0 }];
+  assert.equal(
+    (await request('/assignments/999/playing-style', 'PATCH', { PLAYING_STYLE_ID: null })).response
+      .status,
+    404,
+  );
+  impl = async () => {
+    throw Object.assign(new Error('foreign key'), { code: 'ER_NO_REFERENCED_ROW_2' });
+  };
+  assert.equal(
+    (await request('/assignments/10/playing-style', 'PATCH', { PLAYING_STYLE_ID: 999 })).response
+      .status,
+    404,
+  );
 });
 test('duplicate and referenced-record failures return useful conflict responses', async () => {
   impl = async () => {

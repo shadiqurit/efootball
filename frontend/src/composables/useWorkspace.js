@@ -2,6 +2,9 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, provide, inject } fro
 import { api, isDemo } from '../api.js';
 import { nav, positions, pageSize } from '../config/workspace.js';
 import { initials, roleClass, formatDate } from '../utils/player-format.js';
+import { downloadCsv, playerFields, squadFields, squadExportRows } from '../utils/csv-export.js';
+import { sortSquad, squadSortFields } from '../utils/squad-sort.js';
+import { filterSquad } from '../utils/squad-filter.js';
 
 const workspaceKey = Symbol('touchline-workspace');
 
@@ -34,6 +37,7 @@ function createWorkspace() {
     players = ref([]),
     total = ref(0),
     countries = ref([]),
+    playingStyles = ref([]),
     squad = ref([]);
   const query = ref(''),
     position = ref(''),
@@ -42,6 +46,17 @@ function createWorkspace() {
     currentPage = ref(1),
     accountId = ref(''),
     analyticsId = ref('');
+  const squadSort = ref('rating-desc');
+  const squadQuery = ref('');
+  const sortedSquad = computed(() => sortSquad(squad.value, squadSort.value));
+  const visibleSquad = computed(() => filterSquad(sortedSquad.value, squadQuery.value));
+  function toggleSquadSort(key) {
+    if (!squadSortFields.some((column) => column.key === key)) return;
+    const ascending =
+      squadSort.value === `${key}-desc` ||
+      (!squadSort.value.startsWith(`${key}-`) && key !== 'rating');
+    squadSort.value = `${key}-${ascending ? 'asc' : 'desc'}`;
+  }
   const modal = ref(null),
     form = ref({}),
     formError = ref(''),
@@ -119,9 +134,14 @@ function createWorkspace() {
   async function refresh() {
     loading.value = true;
     try {
-      const [a, filters] = await Promise.all([api('/accounts'), api('/filters')]);
+      const [a, filters, styles] = await Promise.all([
+        api('/accounts'),
+        api('/filters'),
+        api('/playing-styles'),
+      ]);
       accounts.value = a;
       countries.value = filters.countries;
+      playingStyles.value = styles;
       if (!a.some((g) => g.ID === Number(accountId.value))) accountId.value = a[0]?.ID || '';
       if (analyticsId.value && !a.some((g) => g.ID === Number(analyticsId.value)))
         analyticsId.value = '';
@@ -215,7 +235,8 @@ function createWorkspace() {
     form.value = {
       PLAYER_ID: p?.PLAYER_ID || '',
       GAME_ACCOUNT_ID: accountId.value || accounts.value[0].ID,
-      RATING: 90,
+      RATING: '',
+      PLAYING_STYLE_ID: '',
     };
     assignQuery.value = '';
     assignOptions.value = p ? [p] : [];
@@ -246,6 +267,16 @@ function createWorkspace() {
     form.value = { ID: p.ASSIGNMENT_ID, RATING: p.RATING };
     formError.value = '';
     modal.value = { type: 'rating', title: 'Declare player rating', player: p };
+  }
+  function openSquadStyle(p) {
+    form.value = { ID: p.ASSIGNMENT_ID, PLAYING_STYLE_ID: p.PLAYING_STYLE_ID ?? '' };
+    formError.value = '';
+    modal.value = { type: 'squadStyle', title: 'Player playing style', player: p };
+  }
+  function openPlayingStyles() {
+    form.value = { NAME: '' };
+    formError.value = '';
+    modal.value = { type: 'playingStyle', title: 'Playing styles' };
   }
   async function openHistory(p) {
     history.value = [];
@@ -283,6 +314,8 @@ function createWorkspace() {
         delete f.PLAYER_ID;
         f.DOB = f.DOB || null;
         f.FOOT = f.FOOT || null;
+        f.POSITION = f.POSITION || null;
+        f.POSITION_CODE = f.POSITION_CODE || null;
         f.HEIGHT_CM = f.HEIGHT_CM === '' || f.HEIGHT_CM == null ? null : Number(f.HEIGHT_CM);
         await api(`/players${playerId ? `/${playerId}` : ''}`, playerId ? 'PUT' : 'POST', f);
         message = playerId ? 'Player details updated.' : 'Player added to your database.';
@@ -296,8 +329,17 @@ function createWorkspace() {
           PLAYER_ID: Number(f.PLAYER_ID),
           GAME_ACCOUNT_ID: Number(f.GAME_ACCOUNT_ID),
           RATING: Number(f.RATING),
+          PLAYING_STYLE_ID: f.PLAYING_STYLE_ID === '' ? null : Number(f.PLAYING_STYLE_ID),
         });
         message = 'Player assigned to squad.';
+      } else if (kind === 'squadStyle') {
+        await api(`/assignments/${f.ID}/playing-style`, 'PATCH', {
+          PLAYING_STYLE_ID: f.PLAYING_STYLE_ID === '' ? null : Number(f.PLAYING_STYLE_ID),
+        });
+        message = 'Playing style updated for this squad.';
+      } else if (kind === 'playingStyle') {
+        await api('/playing-styles', 'POST', { NAME: f.NAME });
+        message = 'Playing style added to the reference list.';
       } else if (kind === 'rating') {
         await api(`/assignments/${f.ID}/rating`, 'PATCH', { RATING: Number(f.RATING) });
         message = 'Rating updated. History recorded.';
@@ -336,47 +378,34 @@ function createWorkspace() {
         count = data.total;
         if (!data.rows.length) break;
       } while (rows.length < count);
-      const fields = [
-        'PLAYER_ID',
-        'FIRST_NAME',
-        'LAST_NAME',
-        'NAME',
-        'PLAYER_CODE',
-        'COUNTRY',
-        'DOB',
-        'SUB_POSITION',
-        'POSITION',
-        'FOOT',
-        'HEIGHT_CM',
-        'POSITIONS',
-        'POSITION_CODE',
-        'UPD_DATE',
-        'UPD_BY',
-      ];
-      const cell = (v) => {
-        let s = String(v ?? '');
-        if (/^[=+\-@\t\r\n]/.test(s)) s = "'" + s;
-        return '"' + s.replaceAll('"', '""') + '"';
-      };
-      const url = URL.createObjectURL(
-        new Blob(
-          [
-            '\uFEFF' +
-              [fields.join(','), ...rows.map((r) => fields.map((f) => cell(r[f])).join(','))].join(
-                '\r\n',
-              ),
-          ],
-          { type: 'text/csv;charset=utf-8' },
-        ),
-      );
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'touchline-players.csv';
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      downloadCsv(playerFields, rows, 'touchline-players.csv');
       notify(`${rows.length} players exported.`);
     });
     exportBusy.value = false;
+  }
+  const squadExportBusy = ref(false);
+  async function exportSquad() {
+    if (!selectedAccount.value || squadExportBusy.value) return;
+    const account = { ...selectedAccount.value };
+    const order = squadSort.value;
+    const search = squadQuery.value;
+    squadExportBusy.value = true;
+    try {
+      await guarded(async () => {
+        const rows = sortSquad(
+          filterSquad(await api(`/assignments?accountId=${account.ID}`), search),
+          order,
+        );
+        downloadCsv(
+          squadFields,
+          squadExportRows(account, rows),
+          `touchline-squad-${account.ID}.csv`,
+        );
+        notify(`${rows.length} squad players exported with full details.`);
+      });
+    } finally {
+      squadExportBusy.value = false;
+    }
   }
   watch([query, position, country, sort], () => {
     clearTimeout(searchTimer);
@@ -387,6 +416,7 @@ function createWorkspace() {
   });
   watch(currentPage, () => guarded(loadPlayers));
   watch(accountId, () => {
+    squadQuery.value = '';
     if (user.value) guarded(loadSquad);
   });
   watch(analyticsId, () => guarded(loadStats));
@@ -427,6 +457,11 @@ function createWorkspace() {
     total,
     countries,
     squad,
+    sortedSquad,
+    visibleSquad,
+    squadQuery,
+    squadSort,
+    toggleSquadSort,
     query,
     position,
     country,
@@ -466,6 +501,11 @@ function createWorkspace() {
     save,
     exportBusy,
     exportPlayers,
+    playingStyles,
+    openSquadStyle,
+    openPlayingStyles,
+    exportSquad,
+    squadExportBusy,
     isDemo,
   };
 }

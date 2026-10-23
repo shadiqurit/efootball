@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
+import { isAllowedOrigin } from './origin.js';
 
 export function installSecurity(app) {
   app.disable('x-powered-by');
@@ -31,7 +32,7 @@ export function installSecurity(app) {
     res.set('Cache-Control', 'no-store');
     res.vary('Origin');
     const origin = req.headers.origin;
-    const allowed = origin && origin === process.env.APP_ORIGIN;
+    const allowed = isAllowedOrigin(origin, process.env.APP_ORIGIN, process.env.NODE_ENV);
     if (origin && !allowed)
       return res.status(403).json({ message: 'Request origin is not allowed.' });
     if (allowed) {

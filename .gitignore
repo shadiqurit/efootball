@@ -10,3 +10,4 @@ coverage/
 .qa/
 .npm-cache/
 releases/
+backups/

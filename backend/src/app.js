@@ -7,6 +7,7 @@ import { createPlayersRoutes } from './routes/players.js';
 import { createAccountsRoutes } from './routes/accounts.js';
 import { createAssignmentsRoutes } from './routes/assignments.js';
 import { createAnalyticsRoutes } from './routes/analytics.js';
+import { createPlayingStylesRoutes } from './routes/playing-styles.js';
 
 export function createApp(db, transaction) {
   const app = express();
@@ -15,6 +16,7 @@ export function createApp(db, transaction) {
   app.use('/api', createAuthRoutes(db));
   app.use('/api', authenticate(db));
   app.use('/api', createPlayersRoutes(db));
+  app.use('/api', createPlayingStylesRoutes(db));
   app.use('/api', createAccountsRoutes(db));
   app.use('/api', createAssignmentsRoutes(db, transaction));
   app.use('/api', createAnalyticsRoutes(db));

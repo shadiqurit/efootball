@@ -35,25 +35,14 @@ export const playerSchema = z
     COUNTRY: text(),
     DOB: date,
     SUB_POSITION: text(),
-    POSITION: z.enum(['Attack', 'Midfield', 'Defender', 'Goalkeeper']),
+    POSITION: z.enum(['Attack', 'Midfield', 'Defender', 'Goalkeeper']).nullable().optional(),
     FOOT: z.enum(['left', 'right', 'both']).nullable().optional(),
     HEIGHT_CM: z.number().int().min(100).max(250).nullable().optional(),
     POSITIONS: text(),
-    POSITION_CODE: z.enum([
-      'GK',
-      'CB',
-      'LB',
-      'RB',
-      'DMF',
-      'CMF',
-      'AMF',
-      'LMF',
-      'RMF',
-      'LWF',
-      'RWF',
-      'SS',
-      'CF',
-    ]),
+    POSITION_CODE: z
+      .enum(['GK', 'CB', 'LB', 'RB', 'DMF', 'CMF', 'AMF', 'LMF', 'RMF', 'LWF', 'RWF', 'SS', 'CF'])
+      .nullable()
+      .optional(),
   })
   .strict();
 export const accountSchema = z
@@ -65,8 +54,15 @@ export const accountSchema = z
   })
   .strict();
 export const assignmentSchema = z
-  .object({ GAME_ACCOUNT_ID: id, PLAYER_ID: id, RATING: rating })
+  .object({
+    GAME_ACCOUNT_ID: id,
+    PLAYER_ID: id,
+    RATING: rating,
+    PLAYING_STYLE_ID: id.nullable().default(null),
+  })
   .strict();
+export const playingStyleSchema = z.object({ NAME: z.string().trim().min(1).max(100) }).strict();
+export const assignmentStyleSchema = z.object({ PLAYING_STYLE_ID: id.nullable() }).strict();
 export const loginSchema = z
   .object({ email: z.email().max(254), password: z.string().min(1).max(256) })
   .strict();

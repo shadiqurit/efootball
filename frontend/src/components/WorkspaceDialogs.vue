@@ -1,6 +1,7 @@
 <script setup>
 import Icon from './Icon.vue';
 import Modal from './Modal.vue';
+import PlayingStyleSelect from './PlayingStyleSelect.vue';
 import { useWorkspace } from '../composables/useWorkspace.js';
 const {
   modal,
@@ -21,6 +22,7 @@ const {
   selectedAccount,
   history,
   formatDate,
+  playingStyles,
 } = useWorkspace();
 </script>
 
@@ -45,7 +47,9 @@ const {
             pattern="[a-z0-9-]+"
             maxlength="100"
             placeholder="e.g. erling-haaland"
-          /><small>A unique code using lowercase letters, numbers and hyphens.</small></label
+          /><small
+            >Lowercase letters, numbers and hyphens. Player IDs distinguish shared codes.</small
+          ></label
         ><label>First name<input v-model="form.FIRST_NAME" maxlength="100" /></label
         ><label>Last name<input v-model="form.LAST_NAME" maxlength="100" /></label
         ><label
@@ -59,16 +63,16 @@ const {
             type="date"
             :max="new Date().toISOString().slice(0, 10)" /></label
         ><label
-          >Position group <span>*</span
-          ><select v-model="form.POSITION" required>
+          >Position group ><select v-model="form.POSITION">
+            <option value="">Not specified</option>
             <option>Attack</option>
             <option>Midfield</option>
             <option>Defender</option>
             <option>Goalkeeper</option>
           </select></label
         ><label
-          >Position code <span>*</span
-          ><select v-model="form.POSITION_CODE" required>
+          >Position code ><select v-model="form.POSITION_CODE">
+            <option value="">Not specified</option>
             <option v-for="p in positions" :key="p">{{ p }}</option>
           </select></label
         ><label
@@ -161,6 +165,7 @@ const {
         ><label
           >Find a player<input
             v-model="assignQuery"
+            class="search-input"
             placeholder="Search by name…"
             @input="scheduleAssign" /></label
         ><label
@@ -181,16 +186,67 @@ const {
         </select></label
       ><label
         >Player rating <span>*</span
-        ><input v-model="form.RATING" type="number" min="1" max="120" step="1" required /><small
-          >1–120. This rating applies only to the selected game ID.</small
-        ></label
+        ><input
+          v-model="form.RATING"
+          type="number"
+          min="1"
+          max="120"
+          step="1"
+          placeholder="Enter rating (1–120)"
+          required
+        /><small>1–120. This rating applies only to the selected game ID.</small></label
       >
+      <PlayingStyleSelect
+        v-model="form.PLAYING_STYLE_ID"
+        :options="playingStyles"
+        :disabled="saving"
+      />
       <div v-if="formError" class="alert" role="alert">{{ formError }}</div>
       <div class="modal-footer">
         <button type="button" class="button secondary" :disabled="saving" @click="closeModal">
           Cancel</button
         ><button class="button primary" :disabled="saving">
           {{ saving ? 'Assigning…' : 'Assign to squad' }}<Icon name="plus" :size="17" />
+        </button>
+      </div>
+    </form>
+    <form v-else-if="modal.type === 'squadStyle'" class="modal-form" @submit.prevent="save">
+      <p class="form-intro">{{ modal.player.NAME }} · {{ selectedAccount?.LABEL }}</p>
+      <PlayingStyleSelect
+        v-model="form.PLAYING_STYLE_ID"
+        :options="playingStyles"
+        :disabled="saving"
+        help="This style applies to this player's assignment in this squad."
+      />
+      <div v-if="formError" class="alert" role="alert">{{ formError }}</div>
+      <div class="modal-footer">
+        <button type="button" class="button secondary" :disabled="saving" @click="closeModal">
+          Cancel
+        </button>
+        <button class="button primary" :disabled="saving">
+          {{ saving ? 'Saving…' : 'Save playing style' }}
+        </button>
+      </div>
+    </form>
+    <form v-else-if="modal.type === 'playingStyle'" class="modal-form" @submit.prevent="save">
+      <p class="form-intro">These styles are available to every squad. Add another style below.</p>
+      <ul class="playing-style-list" aria-label="Available playing styles">
+        <li v-for="style in playingStyles" :key="style.ID">{{ style.NAME }}</li>
+      </ul>
+      <label
+        >New playing style<input
+          v-model="form.NAME"
+          required
+          maxlength="100"
+          placeholder="e.g. Fox in the Box"
+      /></label>
+      <div v-if="formError" class="alert" role="alert">{{ formError }}</div>
+      <div class="modal-footer">
+        <button type="button" class="button secondary" :disabled="saving" @click="closeModal">
+          Close
+        </button>
+        <button class="button primary" :disabled="saving">
+          {{ saving ? 'Saving…' : 'Add playing style' }}
         </button>
       </div>
     </form>

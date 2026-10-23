@@ -6,7 +6,7 @@ Standalone Vue/Vite project. It builds to a static website; the frontend host ne
 
 Screen templates are separate files in `src/views/`. Shared forms live in `src/components/WorkspaceDialogs.vue`; the app shell remains in `src/App.vue`. `src/composables/useWorkspace.js` owns the shared refs and actions, provided once by the app and consumed by views/dialogs. Navigation and position options are in `src/config/workspace.js`; display helpers are in `src/utils/player-format.js`.
 
-Change HTTP handling in `src/http.js` and styling in `src/style.css`. Use `npm run format` or `npm run format:check` for consistent formatting. No imports reference backend files.
+Change HTTP handling in `src/http.js`. `src/style.css` imports focused theme files from `src/styles/`: tokens, base rules, layout, components, pages and responsive breakpoints. Phones use bottom navigation and labeled data cards; tablets and desktops use wider grids and sidebar layouts. Mobile drawer focus handling is in `src/composables/useNavigationDrawer.js`. Use `npm run format` or `npm run format:check` for consistent formatting. No imports reference backend files.
 
 ## Local development
 
@@ -17,7 +17,14 @@ npm ci
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. Run your backend independently on port 3000 with `APP_ORIGIN=http://127.0.0.1:5173`. Vite proxies `/api` to it.
+Open `http://localhost:5173` or `http://127.0.0.1:5173`. Run your backend independently on port **3005** with `APP_ORIGIN=http://127.0.0.1:5173` and `NODE_ENV=development`. Vite proxies `/api` to it, preserving the browser hostname for session cookies.
+
+If changing the backend port, set these in `frontend/.env.development.local`, then restart Vite:
+
+```dotenv
+VITE_API_URL=/api
+DEV_API_TARGET=http://127.0.0.1:3005
+```
 
 For the explicitly marked browser-only preview, use `npm run demo`. Changes stay in local storage; clear `touchline-demo-v1` to reset them. Neither development nor demo requires backend files for compilation.
 
@@ -55,9 +62,13 @@ A nonempty runtime `config.js` URL overrides the build setting; otherwise the bu
 
 ## Validation
 
+Selected Squad has a player-name search before **Export CSV**. Results filter immediately, ignoring case and accents, with a clear button and matching/total count. Switching squads clears the search. Sort by clicking the player, position, country, playing style or rating column heading; click again to reverse the order. These headings stay visible above the player cards on mobile. Ratings start highest first; missing values remain last. Sorting remains active when switching squads or refreshing data. CSV exports include matching players in the selected order, or the entire squad when search is blank.
+
+In Game IDs & squads, use **Playing styles** to view/add shared references. New assignments start with a blank rating; enter a value from 1 to 120. Type in the playing-style selector to filter its options, then click a result or use arrow keys and Enter. Escape closes the options without changing the selected style. This same selector is used when editing a squad player's style. Existing assignments show **Not specified** until a style is selected. **Export CSV** downloads matching squad players (or all players when search is blank) with all player fields, game/account details, playing style, rating and timestamps. The file uses UTF-8 with a BOM for Excel and escapes formula-like values. The hidden Last rated column remains available as `RATING_UPDATED_AT` in the export.
+
 ```sh
 npm test
 npm run build
 ```
 
-4 tests cover runtime API configuration, credentialed cross-origin requests, authentication errors and deployment URL errors. Production builds exclude demo data. Browser visual verification was unavailable in the development environment.
+12 tests cover runtime API configuration, credentialed cross-origin requests, authentication/deployment errors, CSV encoding/formula protection, detailed squad exports, squad sorting and name filtering. Production builds exclude demo data. Browser visual verification was unavailable in the development environment.

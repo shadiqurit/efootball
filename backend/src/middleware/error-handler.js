@@ -11,7 +11,7 @@ export function errorHandler(err, req, res, next) {
   if (err.code === 'ER_DUP_ENTRY')
     return res
       .status(409)
-      .json({ message: 'This player code, game ID or squad assignment already exists.' });
+      .json({ message: 'This game ID, squad assignment or playing style already exists.' });
   if (err.code === 'ER_ROW_IS_REFERENCED_2')
     return res
       .status(409)

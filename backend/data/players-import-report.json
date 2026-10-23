@@ -1,0 +1,37 @@
+{
+  "source": "players.xlsx",
+  "sheet": "Sheet 1",
+  "records": 32622,
+  "duplicateCodeGroups": 549,
+  "rowsBeyondFirstSharedCode": 749,
+  "missingPositionGroups": 179,
+  "missingPositionCodes": 180,
+  "heightsUnder100cm": [
+    {
+      "PLAYER_ID": 25306,
+      "NAME": "Steve Seddon",
+      "HEIGHT_CM": 19
+    },
+    {
+      "PLAYER_ID": 26005,
+      "NAME": "AÃ¯ssa Boudechicha",
+      "HEIGHT_CM": 18
+    },
+    {
+      "PLAYER_ID": 26936,
+      "NAME": "Genar FornÃ©s",
+      "HEIGHT_CM": 18
+    },
+    {
+      "PLAYER_ID": 28404,
+      "NAME": "Ties Oostra",
+      "HEIGHT_CM": 17
+    },
+    {
+      "PLAYER_ID": 30421,
+      "NAME": "Ryan Trevitt",
+      "HEIGHT_CM": 17
+    }
+  ],
+  "policy": "Every source row and original value is retained. Shared codes do not identify duplicate players. Missing fields and unusual heights are not guessed or repaired."
+}

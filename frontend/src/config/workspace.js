@@ -1,9 +1,9 @@
 export const nav = [
-  { id: 'dashboard', name: 'Overview', icon: 'grid' },
-  { id: 'players', name: 'Player database', icon: 'users' },
-  { id: 'games', name: 'Game IDs & squads', icon: 'game' },
-  { id: 'analytics', name: 'Analytics', icon: 'chart' },
-  { id: 'history', name: 'Rating history', icon: 'history' },
+  { id: 'dashboard', name: 'Overview', shortName: 'Home', icon: 'grid' },
+  { id: 'players', name: 'Player database', shortName: 'Players', icon: 'users' },
+  { id: 'games', name: 'Game IDs & squads', shortName: 'Squads', icon: 'game' },
+  { id: 'analytics', name: 'Analytics', shortName: 'Insights', icon: 'chart' },
+  { id: 'history', name: 'Rating history', shortName: 'History', icon: 'history' },
 ];
 export const positions = [
   'GK',
